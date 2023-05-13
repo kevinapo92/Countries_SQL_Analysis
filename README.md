@@ -7,10 +7,10 @@ This project is intended for anyone interested in gaining a deeper understanding
 
 ## Technologies Used
 
-*SQL (Structured Query Language)
-*MySQL IDE (Integrated Development Environment)
-*MySQL Workbench (Database design and modeling tool)
-*MySQL Server (Relational database management system)
+* SQL (Structured Query Language)
+* MySQL IDE (Integrated Development Environment)
+* MySQL Workbench (Database design and modeling tool)
+* MySQL Server (Relational database management system)
 
 In this project, I utilized SQL as my primary programming language to analyze and manipulate data. To interact with the databases I used MySQL Workbench As IDE.
 
@@ -23,7 +23,7 @@ Throughout this project, I utilized the data provided in these tables to explore
 
 ## Entity Relationship Diagram
 
-![alt text]
+![alt text](https://raw.githubusercontent.com/kevinapo92/World_SQL_Analysis/c0f07baec106d52407dbe0b891f51028a14e7251/EER%20Countries.png)
 
 ## Analysis 
 
