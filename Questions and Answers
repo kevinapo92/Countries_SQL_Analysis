@@ -1,0 +1,8 @@
+USE WORLD;
+
+#### Count number of NULL values in IndepYear
+SELECT COUNT(*) - COUNT(IndepYear) AS null_Values
+FROM country;
+
+null_Values
+47
