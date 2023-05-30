@@ -236,6 +236,209 @@ LEFT JOIN country
 ON t3.CountryCode = country.Code;
 ````
 
+##### Identyfing Group of Monarchs
+````sql
+SELECT HeadOfState ,  Nb_Countries
+FROM (
+SELECT HeadOfState, COUNT(Name) AS Nb_Countries
+FROM country
+GROUP BY HeadOfState) AS t1
+WHERE Nb_Countries > 2 
+ORDER BY Nb_Countries DESC ;
+````
+
+##### Identifying cities with the same name as the country
+````sql
+SELECT DISTINCT *
+FROM (SELECT Name FROM city) AS c1 
+INNER JOIN (SELECT Name FROM country) AS c2
+ON c1.Name = c2.Name ;
+
+--option 2
+
+SELECT Name FROM city
+INTERSECT 
+SELECT Name FROM country; 
+````
+
+##### Average percentage of Languages talk in South America
+````sql
+WITH SA_language AS 
+(SELECT Language, Percentage 
+FROM countrylanguage
+WHERE CountryCode IN 
+		(SELECT Code
+		FROM country
+		WHERE Region = 'South America') 
+ORDER BY Percentage DESC ) 
+SELECT Language, AVG(Percentage) AS AVG_Percentage
+FROM SA_language
+GROUP BY Language 
+ORDER BY AVG_Percentage DESC ; 
+````
+
+##### Countrires above average Life Expectancy and GNP
+````sql
+SELECT Name, LifeExpectancy, GNP
+FROM country
+WHERE LifeExpectancy > (SELECT AVG(LifeExpectancy) 	FROM country WHERE Continent = 'Africa')  AND Continent = 'Africa'
+ORDER BY LifeExpectancy DESC;
+````
+
+##### Number of cities per Country
+````sql
+DROP TABLE IF EXISTS new_tablename;
+CREATE TEMPORARY TABLE new_tablename AS
+SELECT country.Name AS country_name,
+	( SELECT COUNT(*)
+	  FROM city
+      WHERE city.CountryCode = country.Code) AS nb_cities
+FROM country 
+ORDER BY nb_cities DESC ;
+````
+
+##### correlation table between SurfaceArea, Population, LifeExpectancy, GNP
+````sql
+DROP TABLE IF EXISTS CORRELATIONS;
+CREATE TEMPORARY TABLE CORRELATIONS AS
+SELECT 'SurfaceArea' AS measure, 
+		CORR( SurfaceArea,SurfaceArea) AS SurfaceArea,
+        CORR( SurfaceArea,Population) AS Population,
+        CORR( SurfaceArea,LifeExpectancy) AS LifeExpectancy,
+		CORR( SurfaceArea,GNP) AS GNP
+FROM COUNTRY;
+	
+INSERT INTO CORRELATIONS
+SELECT 'Population' AS measure, 
+		CORR( Population,SurfaceArea) AS SurfaceArea,
+        CORR( Population,Population) AS Population,
+        CORR( Population,LifeExpectancy) AS LifeExpectancy,
+		CORR( Population,GNP) AS GNP
+FROM COUNTRY;
+ 
+INSERT INTO CORRELATIONS
+SELECT 'LifeExpectancy' AS measure, 
+		CORR( LifeExpectancy,SurfaceArea) AS SurfaceArea,
+        CORR( LifeExpectancy,Population) AS Population,
+        CORR( LifeExpectancy,LifeExpectancy) AS LifeExpectancy,
+		CORR( LifeExpectancy,GNP) AS GNP
+FROM COUNTRY;
+ 
+INSERT INTO CORRELATIONS
+SELECT 'GNP' AS measure, 
+		CORR( GNP,SurfaceArea) AS SurfaceArea,
+        CORR( GNP,Population) AS Population,
+        CORR( GNP,LifeExpectancy) AS LifeExpectancy,
+		CORR( GNP,GNP) AS GNP
+FROM COUNTRY;
+ 
+SELECT ROUND(SurfaceArea,2) AS SurfaceArea, 
+		ROUND(Population,2) AS	Population,
+        ROUND(LifeExpectancy,2) AS	LifeExpectancy, 
+        ROUND(GNP,2) AS	GNP
+FROM COUNTRY;
+
+````
+
+##### Detect the different form of governments 
+````sql
+SELECT DISTINCT(GovernmentForm) AS Gov_Form , COUNT(*)
+FROM country
+GROUP BY Gov_Form 
+ORDER BY COUNT(*) DESC ;
+````
+
+#####  Countries with more years of independency 
+````sql
+DROP TABLE IF EXISTS Independecy_years;
+CREATE TEMPORARY TABLE Independecy_years AS
+SELECT Name, YEAR(NOW()) - IndepYear AS Years_Independence
+FROM country
+ORDER BY Years_Independence DESC;
+````
+
+
+##### Histogram Table Independence years
+````sql
+SELECT
+    bin_start,
+    bin_end,
+    COUNT(*) AS bin_count
+FROM (
+	SELECT Years_Independence,
+    FLOOR( Years_Independence/100)*100 AS bin_start,
+    FLOOR( Years_Independence/100)*100 + 100 AS bin_end
+	FROM Independecy_years ) AS bin_subquery
+WHERE bin_start IS NOT NULL
+GROUP BY bin_start, bin_end
+ORDER BY bin_start ; 
+````
+
+##### Number of Monarchy by Continents
+````sql
+SELECT Continent, 
+	  COUNT(CASE WHEN outcome = 'Monarchy' THEN Name END) AS Nb_Monarchy , 
+      COUNT(CASE WHEN outcome = 'Other Form of Government' THEN Name END) AS Nb_Other_Govern
+FROM (SELECT Name, Continent, 
+		CASE WHEN GovernmentForm LIKE '%Monarch%' THEN 'Monarchy'
+			 ELSE 'Other Form of Government'
+             END AS outcome 
+	  FROM country
+      ORDER BY outcome DESC) AS Monarchy_Tb
+GROUP BY Continent 
+ORDER BY Nb_Monarchy DESC ;
+````
+
+##### Average variables in Europe
+````sql
+
+SELECT Continent,
+	   AVG(CASE WHEN Continent = 'Europe' THEN SurfaceArea END) AS Avg_SurfArea,
+       AVG(CASE WHEN Continent = 'Europe' THEN Population END) AS Avg_Population,
+	   AVG(CASE WHEN Continent = 'Europe' THEN LifeExpectancy END) AS Avg_LifeExpectancy,
+       AVG(CASE WHEN Continent = 'Europe' THEN GNP END) AS Avg_GNP
+FROM country
+WHERE Continent = 'Europe'
+GROUP BY Continent ;
+````
+
+##### countries with better LifeExpectancy than average Europe
+````sql
+
+SELECT Name 
+FROM country
+WHERE LifeExpectancy > (
+SELECT AVG(LifeExpectancy)
+FROM country
+WHERE  Continent = 'Europe' ) AND Continent != 'Europe';
+
+````
+
+##### A rank for the countries in function of the surface area 
+
+````sql
+SELECT 
+	Name, 
+    SurfaceArea,
+    RANK() OVER(ORDER BY SurfaceArea DESC) AS SurfaceArea_Rank
+FROM country;
+````
+
+
+##### Average surface area of the continent 
+````sql
+
+SELECT 
+	Name,
+    AVG(SurfaceArea) OVER(PARTITION BY Continent) AS Avg_Continent
+FROM country
+````
+
+
+
+
+
+
 
 
 
